@@ -39,26 +39,88 @@ Both products are good at what they do. Cowork is a strong single-player agent i
 
 ### 1. Inventory before you touch a keyboard
 
-List every instruction, skill, connector, schedule and approval the team relies on. Ask who uses each one. Half the list usually belongs to one person and can be cut.
+Per assistant, write one page: every project, every block of standing instructions, every connected tool, every scheduled job, every person who can approve an action, and every document the team actually reuses. Name an owner for each line. That page is the migration's scope, and it is also the acceptance test at the end.
 
-### 2. Write the agents as markdown
+Look for projects that are one instruction repeated under different names, and for connected tools that were authorized once and never called. Both are cheaper to fix before the rewrite than after.
 
-An agent is a file with a persona and a permission tree. Write the job, not the tool: what it may read, what it may change, when it stops for a person. The syntax and the full manifest are in [the layer-by-layer account](https://kortix.com/blog/open-source-ai-management-system).
+### 2. Rewrite the agents as markdown
 
-### 3. Declare the connectors and the grants in `kortix.yaml`
+An agent in Kortix is an `agents/<name>.md` file that carries its persona and its behavior, plus a governance block in `kortix.yaml`. Start from the scaffold:
 
-The manifest names the connectors, the secret names and what each agent may touch. A grant you leave out resolves to `none`, so the first draft is safe by omission. Validate before you push with `kortix validate`.
+```bash
+kortix init
+```
+
+`kortix init` writes `kortix.yaml` and the agent files. Rewrite each instruction block as a job description: what the agent is for, what it reads, what it produces, and where it stops. Keep the vendor's prose where it is still true. Delete the parts that described an interface you no longer have ("click Export, then..."), because those lines teach the agent nothing in a repository.
+
+Procedures that repeat become skills, one directory each with a `SKILL.md` at the root. The test is simple: if two agents would both need the paragraph, it is a skill, not an agent prompt.
+
+### 3. Declare connectors and grants
+
+This is the step teams underestimate, and it is where the permissions cross over. In `kortix.yaml` you declare the secret names the project expects, the connectors it offers, and what each agent may reach.
+
+```yaml
+kortix_version: 2
+default_agent: chief-of-staff
+
+env:
+  required: [HELPDESK_API_KEY]
+
+connectors:
+  - slug: helpdesk
+    provider: http
+    base_url: https://helpdesk.example.com
+    auth:
+      type: bearer
+
+agents:
+  chief-of-staff:
+    file: agents/chief-of-staff.md
+    connectors: all
+    secrets: all
+
+  support-triage:
+    file: agents/support-triage.md
+    connectors: [helpdesk]
+    secrets: [HELPDESK_API_KEY]
+```
+
+Every omitted grant resolves to `none`. An agent that does not list a connector cannot call it, and the failure is quiet until someone asks why the work stopped. Write the grants explicitly, agent by agent, and validate before you push:
+
+```bash
+kortix validate
+kortix validate --scopes
+```
+
+`kortix validate` exits 0 with no errors, 1 with one or more, and 2 when the file is missing or unreadable. The same schema check runs in `kortix ship` and in the change request merge check, so a broken manifest cannot reach `main` quietly. `--scopes` prints the grantable permissions, which is how you avoid inventing one.
+
+Then set the approval policy. Gates are off until you set them, and a project with no `policy` block allows the calls no rule matches. For a team coming off Cowork's approval habit, `default_mode: risk` is the closer match: reads run, and writes or destructive calls stop for a person.
 
 ### 4. Review the first change request
 
-Start one real job and let the agent finish it on its own branch. Read the diff, merge it, then retire the old workflow. That first merge is the migration's proof, not the export.
+Give one agent one real job and watch what comes back.
 
-## Docs
+```bash
+kortix sessions new --prompt "Reconcile last month's receipts and open a change request with the exceptions"
+kortix cr ls
+kortix cr diff 1
+kortix cr merge 1
+```
 
-- [From Claude Cowork](docs/from-claude-cowork.md): what a Cowork team has, what each piece becomes, and the gaps.
-- [From ChatGPT Work](docs/from-chatgpt-work.md): the same for a ChatGPT Work team, including the subscription and keys decision.
-- [The pre-switch checklist](docs/checklist.md): twelve items to tick before the old subscription goes quiet.
+"Session work reaches `main` through a change request. Merge is default-deny for agents." The first change request is the real acceptance test: the diff shows whether the instructions produced the work you meant, and the review shows whether the permissions let it happen. If the diff is wrong, fix the markdown, not the diff.
 
-Every command and key here comes from Kortix's own documentation: [kortix.com/docs](https://kortix.com/docs), the [manifest reference](https://kortix.com/docs/project/manifest) and the [CLI reference](https://kortix.com/docs/cli). [Kortix on GitHub](https://github.com/kortix-ai/suna) carries the code. A shorter version of the ownership argument is at [opensourceaioperatingsystem.com](https://opensourceaioperatingsystem.com/).
+Keep the old subscription active and read-only for two weeks. Run the same job in both places once, compare the outputs, then cancel on the date you wrote down.
 
-Run it on Kortix Cloud, in your VPC, or on your own on-prem network. Self-host is free. [Try Kortix](https://kortix.com).
+## The three documents
+
+- [From Claude Cowork](docs/from-claude-cowork.md): projects, instructions and connected tools mapped one by one, with the gaps named.
+- [From ChatGPT Work](docs/from-chatgpt-work.md): the same mapping, plus the subscription and keys decision.
+- [Pre-switch checklist](docs/checklist.md): twelve checks between "the repository exists" and "the old tool is cancelled".
+
+## Where these facts come from
+
+The Kortix mechanics come from the `kortix.yaml` reference at `kortix.com/docs/project/manifest`, the overview at `kortix.com/docs`, and the layer-by-layer write-up at `kortix.com/blog/open-source-ai-management-system`. The Cowork facts come from Anthropic's release notes and product pages as reported in `kortix.com/blog/kortix-vs-claude-cowork`, checked October 2026: Cowork folded into Claude on September 16, 2026, runs in Anthropic's cloud or a customer's Bedrock, Google Cloud or Microsoft Foundry account, and takes Claude models only. The ChatGPT Work facts come from OpenAI's pages as reported in `kortix.com/blog/open-source-chatgpt-work-alternative`, checked October 2026: closed source, OpenAI's cloud, no self-host, and a team floor of two Business seats.
+
+Both products change. Re-read the vendor's page before you quote a plan or a price at your own team, and date the line when you do.
+
+Kortix is open source, and the code is there to check. Run it on Kortix Cloud, in your VPC, or on your own on-prem network. Self-host is free. The ownership argument in shorter form is at [opensourceaioperatingsystem.com](https://opensourceaioperatingsystem.com/). [Kortix](https://kortix.com) carries the code, the docs and a free start.
