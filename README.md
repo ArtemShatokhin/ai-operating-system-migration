@@ -123,4 +123,4 @@ The Kortix mechanics come from the `kortix.yaml` reference at `kortix.com/docs/p
 
 Both products change. Re-read the vendor's page before you quote a plan or a price at your own team, and date the line when you do.
 
-Kortix is open source, and the code is there to check. Run it on Kortix Cloud, in your VPC, or on your own on-prem network. Self-host is free. The ownership argument in shorter form is at [opensourceaioperatingsystem.com](https://opensourceaioperatingsystem.com/). [Kortix](https://kortix.com) carries the code, the docs and a free start.
+Kortix is open source, and the code is there to check. Run it on Kortix Cloud, in your VPC, or on your own on-prem network. Self-host is free. The ownership argument in shorter form is at [opensourceaioperatingsystem.com](https://opensourceaioperatingsystem.com/); if the system you are leaving is Claude Cowork, [the open-source alternative](https://opensourceaioperatingsystem.com/open-source-alternative-to-claude-cowork) puts the two side by side. [Kortix](https://kortix.com) carries the code, the docs and a free start.
