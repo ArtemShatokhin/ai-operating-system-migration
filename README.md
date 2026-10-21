@@ -111,10 +111,11 @@ kortix cr merge 1
 
 Keep the old subscription active and read-only for two weeks. Run the same job in both places once, compare the outputs, then cancel on the date you wrote down.
 
-## The three documents
+## The four documents
 
 - [From Claude Cowork](docs/from-claude-cowork.md): projects, instructions and connected tools mapped one by one, with the gaps named.
 - [From ChatGPT Work](docs/from-chatgpt-work.md): the same mapping, plus the subscription and keys decision.
+- [From OpenFang](docs/from-openfang.md): a single binary's Hands, memory and guardrails moved into agent files, a `memory/` directory and a review path.
 - [Pre-switch checklist](docs/checklist.md): twelve checks between "the repository exists" and "the old tool is cancelled".
 
 ## Where these facts come from
